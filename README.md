@@ -34,7 +34,7 @@ npm install
 
 ```
 src/
-  config/          Conexión a MongoDB (connectDatabase / disconnectDatabase)
+  config/          Conexión a MongoDB 
   models/          Definición de Schemas y Models
     organization.model.ts   Forma TRADICIONAL: interface + Schema + Model
     user.model.ts            Forma MODERNA: Schema -> InferSchemaType -> Model
@@ -46,8 +46,7 @@ src/
 ```
 
 Cada archivo de `examples/` reutiliza los mismos `models/` y `services/`:
-la única diferencia entre los tres es el **estilo asíncrono** empleado para
-encadenar las operaciones y manejar los errores.
+la única diferencia entre los tres es el **estilo asíncrono** empleado para encadenar las operaciones y manejar los errores.
 
 La separación `models/` (esquema y tipos) + `services/` (acceso a datos)
 está pensada para poder crecer hacia una API REST sin reestructurar nada:

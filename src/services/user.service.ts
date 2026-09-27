@@ -33,6 +33,9 @@ import { IOrganization } from "../models/organization.model.js";
 //     TypeScript explícitamente con el genérico de `.populate<>()`.
 // ============================================================
 
+
+
+
 // --- CRUD básico ---
 export const findUserById = async (id: Types.ObjectId | string): Promise<UserSchemaType | null> => {
   return await UserModel.findById(id).lean();
