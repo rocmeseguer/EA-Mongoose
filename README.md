@@ -6,10 +6,11 @@ Asegúrate de tener instalados los siguientes programas en tu sistema:
 
 - [Node.js](https://nodejs.org/) (versión 14.x o superior)
 - [MongoDB](https://www.mongodb.com/) (puede ser local o en la nube a través de MongoDB Atlas)
-- [npm](https://www.npmjs.com/) 
+- [npm](https://www.npmjs.com/)
 - [TS] TypeScript
 
 Instalar TypeScript
+
 ```
 npm install -g typescript
 ```
@@ -24,6 +25,7 @@ cd EA-Mongoose
 ## Dependencias del proyecto
 
 Instalar Mongoose y otras dependencias
+
 ```
 npm install
 ```
@@ -57,11 +59,13 @@ de esa futura API.
 ## Complilación y ejecución
 
 Transpilar de TS a JS
+
 ```
 npm run build
 ```
 
 Ejecutar cada ejemplo (compila y ejecuta):
+
 ```
 npm run example:simple
 npm run example:promises

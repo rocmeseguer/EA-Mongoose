@@ -1,6 +1,11 @@
-import { Aggregate, Types } from 'mongoose';
-import { UserModel, UserSchemaType, UserDocument } from '../models/user.model.js';
-import { IOrganization } from '../models/organization.model.js';
+import { Aggregate, Types } from "mongoose";
+import {
+  UserModel,
+  UserSchemaType,
+  UserSummary,
+  UserWithOrganization,
+} from "../models/user.model.js";
+import { IOrganization } from "../models/organization.model.js";
 
 // ============================================================
 // SERVICE de "User"
@@ -28,50 +33,52 @@ import { IOrganization } from '../models/organization.model.js';
 //     TypeScript explícitamente con el genérico de `.populate<>()`.
 // ============================================================
 
-type NewUser = Pick<UserSchemaType, 'name' | 'email' | 'role' | 'organization'>;
-
-export const seedUsers = async (
-  users: ReadonlyArray<NewUser>
-): Promise<UserDocument[]> => UserModel.insertMany(users);
-
-export const deleteAllUsers = async (): Promise<number> => {
-  const { deletedCount } = await UserModel.deleteMany({});
-  return deletedCount ?? 0;
+// --- CRUD básico ---
+export const findUserById = async (id: Types.ObjectId | string): Promise<UserSchemaType | null> => {
+  return await UserModel.findById(id).lean();
 };
 
-// --- CRUD básico ---
-export const findUserById = async (
-  id: Types.ObjectId | string
-): Promise<UserDocument | null> => UserModel.findById(id);
+export const findUserByName = async (name: string): Promise<UserSchemaType | null> => {
+  return await UserModel.findOne({ name }).lean();
+};
 
-export const findUserByName = async (name: string): Promise<UserDocument | null> =>
-  UserModel.findOne({ name });
+export const createUser = async (data: UserSchemaType): Promise<UserSchemaType | null> => {
+  return await new UserModel(data).save();
+};
+
+export const updateUser = async (
+  id: string,
+  data: Partial<UserSchemaType>,
+): Promise<UserSchemaType | null> => {
+  return await UserModel.findByIdAndUpdate(id, data, { new: true }).lean();
+};
+
+export const deleteUserById = async (id: string): Promise<UserSchemaType | null> => {
+  return await UserModel.findByIdAndDelete(id);
+};
+
+export const listAllUsers = async (): Promise<UserSchemaType[]> => {
+  return await UserModel.find().lean();
+};
 
 // select(): pedimos solo los campos que nos interesan.
 // lean(): devuelve un objeto JS plano en vez de un Documento de
 // Mongoose. Es preferible cuando solo vamos a LEER datos, porque
 // nos ahorramos el coste de construir un documento completo con
 // todos sus métodos (.save(), getters, etc.).
-type UserSummary = Pick<UserSchemaType, 'name' | 'email'> & { _id: Types.ObjectId };
 
 export const findUserSummaryByName = async (name: string): Promise<UserSummary | null> =>
-  UserModel.findOne({ name }).select('name email').lean();
+  UserModel.findOne({ name }).select("name email").lean();
 
 // --- POPULATE ---
 // populate('organization') sustituye el ObjectId guardado en el
 // campo "organization" por el documento completo al que apunta.
 // Es el equivalente en Mongoose a un JOIN en SQL.
-type UserWithOrganization = Omit<UserSchemaType, 'organization'> & {
-  _id: Types.ObjectId;
-  organization: IOrganization;
-};
 
 export const findUserWithOrganization = async (
-  name: string
+  name: string,
 ): Promise<UserWithOrganization | null> =>
-  UserModel.findOne({ name })
-    .populate<{ organization: IOrganization }>('organization')
-    .lean();
+  UserModel.findOne({ name }).populate<{ organization: IOrganization }>("organization").lean();
 
 // --- AGGREGATION PIPELINE ---
 // Igual que populate, pero a nivel de agregación: $lookup es el
@@ -86,24 +93,34 @@ interface OrganizationUserStats {
 export const aggregateUsersByOrganization = (): Aggregate<OrganizationUserStats[]> =>
   UserModel.aggregate<OrganizationUserStats>([
     // 1. Filtramos: nos quedamos solo con roles "reales".
-    { $match: { role: { $ne: 'GUEST' } } },
+    { $match: { role: { $ne: "GUEST" } } },
     // 2. Agrupamos por organización y contamos usuarios.
-    { $group: { _id: '$organization', totalUsers: { $sum: 1 } } },
+    { $group: { _id: "$organization", totalUsers: { $sum: 1 } } },
     // 3. $lookup = el JOIN del mundo de las agregaciones.
     {
       $lookup: {
-        from: 'organizations', // nombre real de la colección en Mongo
-        localField: '_id',
-        foreignField: '_id',
-        as: 'orgInfo'
-      }
+        from: "organizations", // nombre real de la colección en Mongo
+        localField: "_id",
+        foreignField: "_id",
+        as: "orgInfo",
+      },
     },
     // 4. Proyectamos solo lo que queremos mostrar.
     {
       $project: {
         _id: 0,
-        organizationName: { $arrayElemAt: ['$orgInfo.name', 0] },
-        totalUsers: 1
-      }
-    }
+        organizationName: { $arrayElemAt: ["$orgInfo.name", 0] },
+        totalUsers: 1,
+      },
+    },
   ]);
+
+// --- SEED / DELETE ---
+
+export const seedUsers = async (users: ReadonlyArray<UserSchemaType>): Promise<UserSchemaType[]> =>
+  UserModel.insertMany(users);
+
+export const deleteAllUsers = async (): Promise<number> => {
+  const { deletedCount } = await UserModel.deleteMany({});
+  return deletedCount ?? 0;
+};

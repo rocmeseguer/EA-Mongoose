@@ -1,4 +1,6 @@
-import type { Types } from 'mongoose';
+import { Types } from "mongoose";
+import type { IOrganizationWithId } from "../models/organization.model.js";
+import type { UserSchemaType } from "../models/user.model.js";
 
 // ============================================================
 // DATOS DE PRUEBA (seed)
@@ -9,32 +11,37 @@ import type { Types } from 'mongoose';
 // async/await + composición), no los datos ni las operaciones.
 // ============================================================
 
-export const organizationsSeed = [
-  { name: 'Initech', country: 'USA' },
-  { name: 'Umbrella Corp', country: 'UK' }
-] as const;
+export const organizationsSeed: IOrganizationWithId[] = [
+  {
+    name: "Initech",
+    country: "USA",
+    _id: new Types.ObjectId(),
+  },
+  {
+    name: "Umbrella Corp",
+    country: "UK",
+    _id: new Types.ObjectId(),
+  },
+];
 
-type OrgWithId = { _id: Types.ObjectId; name: string };
+export const usersSeed: UserSchemaType[] = [
+  {
+    name: "Bill",
+    email: "bill@initech.com",
+    role: "ADMIN" as const,
+    organization: organizationsSeed[0]._id,
+  },
 
-/**
- * Función PURA: a partir de las organizaciones ya insertadas (con
- * su _id real asignado por MongoDB), construye la lista de
- * usuarios a sembrar. No accede a la base de datos, no imprime
- * nada ni depende de nada externo: mismos argumentos, mismo
- * resultado, siempre.
- */
-export const buildUsersSeed = (organizations: ReadonlyArray<OrgWithId>) => {
-  const idOf = (name: string): Types.ObjectId => {
-    const found = organizations.find((org) => org.name === name);
-    if (!found) {
-      throw new Error(`Seed inválido: no existe la organización "${name}"`);
-    }
-    return found._id;
-  };
-
-  return [
-    { name: 'Bill', email: 'bill@initech.com', role: 'ADMIN' as const, organization: idOf('Initech') },
-    { name: 'Peter', email: 'peter@initech.com', role: 'USER' as const, organization: idOf('Initech') },
-    { name: 'Alice', email: 'alice@umbrella.com', role: 'EDITOR' as const, organization: idOf('Umbrella Corp') }
-  ];
-};
+  {
+    name: "Peter",
+    email: "peter@initech.com",
+    role: "USER" as const,
+    organization: organizationsSeed[1]._id,
+  },
+  {
+    name: "Alice",
+    email: "alice@umbrella.com",
+    role: "EDITOR" as const,
+    organization: organizationsSeed[1]._id,
+  },
+];

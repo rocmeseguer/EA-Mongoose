@@ -17,17 +17,18 @@
  * Ejecutar:  npm run example:async
  * ============================================================
  */
-import { connectDatabase, disconnectDatabase } from '../config/db.js';
-import { deleteAllOrganizations, seedOrganizations } from '../services/organization.service.js';
+
+import { connectDatabase, disconnectDatabase } from "../config/db.js";
+import { deleteAllOrganizations, seedOrganizations } from "../services/organization.service.js";
 import {
   aggregateUsersByOrganization,
   deleteAllUsers,
   findUserByName,
   findUserSummaryByName,
   findUserWithOrganization,
-  seedUsers
-} from '../services/user.service.js';
-import { buildUsersSeed, organizationsSeed } from './seed-data.js';
+  seedUsers,
+} from "../services/user.service.js";
+import { usersSeed, organizationsSeed } from "./seed-data.js";
 
 // Estado que fluye por la receta. Es de solo lectura (readonly):
 // ningún paso puede mutarlo, solo puede devolver uno nuevo.
@@ -40,46 +41,47 @@ const initialState: DemoState = { organizationsCount: 0, usersCount: 0 };
 
 const cleanDatabase = async (state: DemoState): Promise<DemoState> => {
   await Promise.all([deleteAllUsers(), deleteAllOrganizations()]);
-  console.log('Base de datos limpiada');
+  console.info("Base de datos limpiada");
   return state;
 };
 
 const seedDatabase = async (state: DemoState): Promise<DemoState> => {
   const organizations = await seedOrganizations(organizationsSeed);
-  const users = await seedUsers(buildUsersSeed(organizations));
-  console.log(`Insertadas ${organizations.length} organizaciones y ${users.length} usuarios`);
+  console.info("Organizaciones insertadas: %d", organizations.length);
+  const users = await seedUsers(usersSeed);
+  console.info("Usuarios insertados: %d", users.length);
   // Spread: devolvemos un objeto NUEVO en vez de modificar "state".
   return { ...state, organizationsCount: organizations.length, usersCount: users.length };
 };
 
 const runCrudDemo = async (state: DemoState): Promise<DemoState> => {
-  console.log('\n--- CRUD ---');
-  const bill = await findUserByName('Bill');
-  console.log('Usuario encontrado:', bill?.name, bill?.email);
+  console.info("\n--- CRUD ---");
+  const bill = await findUserByName("Bill");
+  console.info({ bill }, "Usuario encontrado:");
 
-  const billSummary = await findUserSummaryByName('Bill');
-  console.log('Resumen (select + lean):', billSummary);
+  const billSummary = await findUserSummaryByName("Bill");
+  console.info({ billSummary }, "Resumen (select + lean):");
   return state;
 };
 
 const runPopulateDemo = async (state: DemoState): Promise<DemoState> => {
-  console.log('\n--- POPULATE ---');
-  const billWithOrg = await findUserWithOrganization('Bill');
-  console.log('Usuario con organización:', billWithOrg);
+  console.info("\n--- POPULATE ---");
+  const billWithOrg = await findUserWithOrganization("Bill");
+  console.info({ billWithOrg }, "Usuario con organización:");
   return state;
 };
 
 const runAggregationDemo = async (state: DemoState): Promise<DemoState> => {
-  console.log('\n--- AGGREGATION PIPELINE ---');
+  console.info("\n--- AGGREGATION PIPELINE ---");
   const stats = await aggregateUsersByOrganization();
-  console.table(stats);
+  console.info({ stats }, "Estadísticas de usuarios por organización:");
   return state;
 };
 
 const main = async (): Promise<void> => {
   try {
     await connectDatabase();
-    console.log('Conectado a MongoDB');
+    console.info("Conectado a MongoDB");
 
     // Cada paso se llama directamente con `await`, encadenando el
     // estado a mano: mismo resultado que una composición genérica,
@@ -90,13 +92,17 @@ const main = async (): Promise<void> => {
     state = await runPopulateDemo(state);
     state = await runAggregationDemo(state);
 
-    console.log(`\nResumen final: ${state.organizationsCount} organizaciones, ${state.usersCount} usuarios`);
+    console.info(
+      `\nResumen final: ${state.organizationsCount} organizaciones, ${state.usersCount} usuarios`,
+    );
   } catch (error) {
-    console.error('Error en el ejemplo:', error);
+    console.error(error, "Error en el ejemplo:");
   } finally {
     await disconnectDatabase();
-    console.log('Desconectado de MongoDB');
+    console.info("Desconectado de MongoDB");
   }
 };
 
 main();
+
+

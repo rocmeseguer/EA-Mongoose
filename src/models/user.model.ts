@@ -1,4 +1,6 @@
-import { Schema, model, InferSchemaType, HydratedDocument } from 'mongoose';
+import { Schema, model, InferSchemaType, HydratedDocument } from "mongoose";
+import { IOrganization } from "./organization.model.js";
+import { Types } from "mongoose";
 
 // ============================================================
 // MODELO "User" — FORMA MODERNA (Mongoose >= 6)
@@ -23,8 +25,8 @@ import { Schema, model, InferSchemaType, HydratedDocument } from 'mongoose';
 const userSchema = new Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  role: { type: String, enum: ['ADMIN', 'EDITOR', 'USER'] as const, default: 'USER' },
-  organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true }
+  role: { type: String, enum: ["ADMIN", "EDITOR", "USER"] as const, default: "USER" },
+  organization: { type: Schema.Types.ObjectId, ref: "Organization", required: true },
 });
 
 // Tipo "plano" inferido del Schema (sin métodos de instancia).
@@ -33,4 +35,20 @@ export type UserSchemaType = InferSchemaType<typeof userSchema>;
 // Tipo de documento tal cual lo devuelve Mongoose (con métodos).
 export type UserDocument = HydratedDocument<UserSchemaType>;
 
-export const UserModel = model<UserSchemaType>('User', userSchema);
+export const UserModel = model<UserSchemaType>("User", userSchema);
+
+// --- TIPOS AUXILIARES ---
+
+// UserWithId = todos los campos de User, pero con el campo "_id" añadido
+export type UserWithId = UserSchemaType & { _id: Types.ObjectId };
+
+// UserSummary = solo los campos que nos interesan para mostrar
+// Lo usamos en findUserSummaryByName().
+export type UserSummary = Pick<UserSchemaType, "name" | "email"> & { _id: Types.ObjectId };
+
+// UserWithOrganization = todos los campos de User,
+// pero con el campo "organization" sustituido por el documento completo de Organization
+// Lo usamos en findUserWithOrganizationById().
+export type UserWithOrganization = Omit<UserSchemaType, "organization"> & {
+  organization: IOrganization;
+};

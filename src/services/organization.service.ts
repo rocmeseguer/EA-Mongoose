@@ -1,5 +1,9 @@
-import { Types } from 'mongoose';
-import { OrganizationModel, IOrganization } from '../models/organization.model.js';
+import { Types } from "mongoose";
+import {
+  OrganizationModel,
+  IOrganization,
+  IOrganizationWithId,
+} from "../models/organization.model.js";
 
 // ============================================================
 // SERVICE de "Organization"
@@ -22,17 +26,22 @@ import { OrganizationModel, IOrganization } from '../models/organization.model.j
 // la llamada hasta el modelo para saber qué devuelve.
 // ============================================================
 
-type NewOrganization = Pick<IOrganization, 'name' | 'country'>;
+type NewOrganization = Pick<IOrganization, "name" | "country">;
+
+export const findOrganizationById = async (
+  id: Types.ObjectId | string,
+): Promise<IOrganization | null> => OrganizationModel.findById(id).lean();
+
+// --- SEED / DELETE ---
 
 export const seedOrganizations = async (
-  organizations: ReadonlyArray<NewOrganization>
-): Promise<IOrganization[]> => OrganizationModel.insertMany(organizations);
+  organizations: ReadonlyArray<NewOrganization>,
+): Promise<IOrganizationWithId[]> => {
+  const insetedOrganizations = await OrganizationModel.insertMany(organizations);
+  return insetedOrganizations;
+};
 
 export const deleteAllOrganizations = async (): Promise<number> => {
   const { deletedCount } = await OrganizationModel.deleteMany({});
   return deletedCount ?? 0;
 };
-
-export const findOrganizationById = async (
-  id: Types.ObjectId | string
-): Promise<IOrganization | null> => OrganizationModel.findById(id).lean();

@@ -1,4 +1,4 @@
-import { Schema, model, Types } from 'mongoose';
+import { Schema, model, Types } from "mongoose";
 
 // ============================================================
 // MODELO "Organization" — FORMA TRADICIONAL
@@ -17,14 +17,16 @@ import { Schema, model, Types } from 'mongoose';
 // ============================================================
 
 export interface IOrganization {
-  _id: Types.ObjectId;
   name: string;
   country: string;
 }
 
 const organizationSchema = new Schema<IOrganization>({
   name: { type: String, required: true, trim: true },
-  country: { type: String, required: true, trim: true }
+  country: { type: String, required: true, trim: true },
 });
 
-export const OrganizationModel = model<IOrganization>('Organization', organizationSchema);
+export const OrganizationModel = model<IOrganization>("Organization", organizationSchema);
+
+// --- TIPOS AUXILIARES ---
+export type IOrganizationWithId = IOrganization & { _id: Types.ObjectId };
